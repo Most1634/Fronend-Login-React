@@ -1,47 +1,70 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { experiments } from '../data/experiments';
+import './Profile.css';
 
 const Profile = () => {
   const { user, loading, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/login');
-    }
-  }, [user, loading, navigate]);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   if (loading) {
-    return (
-      <div className="auth-container">
-        <p>Loading...</p>
-      </div>
-    );
+    return <div className="loading">Loading...</div>;
   }
 
   if (!user) {
-    return (
-      <div className="auth-container">
-        <p>Please log in to view your profile.</p>
-      </div>
-    );
+    navigate('/login');
+    return null;
   }
 
   return (
-    <div className="auth-container">
-      <h2>Welcome {user.name || 'User'}</h2>
-      <div className="profile-info">
-        <p><strong>Name:</strong> {user.name || 'Not provided'}</p>
-        <p><strong>Email:</strong> {user.email}</p>
-        <p><strong>User ID:</strong> {user.id}</p>
+    <div className="profile-container">
+      <div className="profile-header">
+        <h2>Welcome, {user.name || user.email}</h2>
+        <button onClick={logout} className="logout-button">Logout</button>
       </div>
-      <button onClick={handleLogout}>Logout</button>
+
+      <div className="profile-content">
+        <div className="user-info">
+          <h3>User Information</h3>
+          <p><strong>Email:</strong> {user.email}</p>
+          <p><strong>ID:</strong> {user.id}</p>
+        </div>
+
+        <div className="experiments-section">
+          <h3>Epics Experiments</h3>
+          <div className="experiments-grid">
+            {experiments.map(exp => (
+              <div key={exp.key} className="experiment-card">
+                <h4>{exp.definition.name}</h4>
+                <div className="experiment-meta">
+                  <span className={`status ${exp.current_status.state}`}>
+                    Status: {exp.current_status.state}
+                  </span>
+                  <span>Milestone: {exp.definition.milestone}</span>
+                </div>
+                <div className="experiment-details">
+                  <p><strong>Group:</strong> {exp.definition.group}</p>
+                  <p><strong>Default Enabled:</strong> {exp.definition.default_enabled.toString()}</p>
+                  {exp.current_status.gates.map((gate, index) => (
+                    <p key={index}>
+                      <strong>{gate.key}:</strong> {gate.value.toString()}
+                    </p>
+                  ))}
+                </div>
+                <div className="experiment-links">
+                  <a href={exp.definition.introduced_by_url} target="_blank" rel="noopener noreferrer">
+                    Merge Request
+                  </a>
+                  <a href={exp.definition.rollout_issue_url} target="_blank" rel="noopener noreferrer">
+                    Rollout Issue
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
